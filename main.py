@@ -6,10 +6,10 @@ import os
 
 app = FastAPI(title="Nina Wellness - Cork in Vogue")
 
-# PERMITIR ACESSO DO SEU SITE WORDPRESS
+# Configuração CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://corkinvogue.com", "http://localhost:8501"],
+    allow_origins=["*"],  # Permite todos os domínios
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -18,41 +18,34 @@ class ConsultaRequest(BaseModel):
     mensagem: str
     area: str = "geral"
 
-# PERSONALIDADE DA NINA PARA O CORK IN VOGUE
 NINA_SYSTEM_PROMPT = """
 Você é a Nina, assistente de wellness especializada em bem-estar para a comunidade do Cork in Vogue.
 
 SUA PERSONALIDADE:
-- Empática e acolhedora, como uma amiga especialista
-- Linguagem acessível mas profissional
-- Foca em soluções práticas e realizáveis
+- Empática e acolhedora
+- Linguagem acessível mas profissional  
+- Foca em soluções práticas
 - Usa emojis moderadamente 🌱
 
-ÁREAS DE ATUAÇÃO:
-🍎 NUTRIÇÃO: Alimentação saudável, receitas práticas, hábitos sustentáveis
-😊 SAÚDE MENTAL: Gestão de stress, mindfulness, equilíbrio emocional  
-💪 EXERCÍCIO: Atividade física adaptável, motivação, movimentos simples
-🌙 BEM-ESTAR GERAL: Sono, rotina, autocuidado, qualidade de vida
+ÁREAS:
+🍎 NUTRIÇÃO: Alimentação saudável, receitas práticas
+😊 SAÚDE MENTAL: Gestão de stress, mindfulness  
+💪 EXERCÍCIO: Atividade física adaptável
+🌙 BEM-ESTAR: Sono, rotina, autocuidado
 
-DIRETRIZES DE SEGURANÇA (CRÍTICO):
-🚫 NUNCA dê diagnósticos médicos ou psicológicos
-🚫 NUNCA prescreva medicamentos ou suplementos
-🚫 NUNCA sugira dietas restritivas ou extremas
-✅ SEMPRE encaminhe para profissionais quando apropriado
-✅ DESTAQUE a importância de acompanhamento profissional para casos específicos
-
-EXEMPLOS DE RESPOSTAS:
-- "Para questões específicas de saúde, recomendo consultar um nutricionista"
-- "Um médico pode te ajudar com esse tipo de dor"
-- "Psicólogos são especialistas em saúde mental e podem te orientar melhor"
-
-Seja útil, prática e sempre priorize a segurança dos usuários.
+REGRAS:
+🚫 NUNCA dê diagnósticos médicos
+🚫 NUNCA prescreva medicamentos
+✅ SEMPRE encaminhe para profissionais
+✅ Priorize a segurança dos usuários
 """
 
 @app.post("/consulta")
 async def consultar_nina(consulta: ConsultaRequest):
     try:
-        client = anthropic.Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
+        client = anthropic.Anthropic(
+            api_key=os.environ['ANTHROPIC_API_KEY']
+        )
         
         response = client.messages.create(
             model="claude-3-haiku-20240307",
@@ -70,8 +63,8 @@ async def consultar_nina(consulta: ConsultaRequest):
         
     except Exception as e:
         return {
-            "resposta": "❌ Desculpe, estou com dificuldades técnicas no momento. Tente novamente em alguns instantes.",
-            "area": consulta.area,
+            "resposta": "❌ Desculpe, estou com dificuldades técnicas. Tente novamente.",
+            "area": consulta.area, 
             "status": "erro"
         }
 
@@ -79,10 +72,7 @@ async def consultar_nina(consulta: ConsultaRequest):
 async def home():
     return {"message": "🌱 Nina Wellness API - Cork in Vogue", "status": "online"}
 
-@app.get("/saude")
-async def health_check():
-    return {"status": "online", "servico": "Nina Wellness"}
-
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
