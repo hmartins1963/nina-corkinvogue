@@ -4,12 +4,13 @@ from fastapi.middleware.cors import CORSMiddleware
 import anthropic
 import os
 
-app = FastAPI(title="Nina Wellness - Cork in Vogue")
+app = FastAPI()
 
-# Configuração CORS
+# Configuração CORS - permite todos os domínios
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Permite todos os domínios
+    allow_origins=["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -18,26 +19,10 @@ class ConsultaRequest(BaseModel):
     mensagem: str
     area: str = "geral"
 
-NINA_SYSTEM_PROMPT = """
-Você é a Nina, assistente de wellness especializada em bem-estar para a comunidade do Cork in Vogue.
-
-SUA PERSONALIDADE:
-- Empática e acolhedora
-- Linguagem acessível mas profissional  
-- Foca em soluções práticas
-- Usa emojis moderadamente 🌱
-
-ÁREAS:
-🍎 NUTRIÇÃO: Alimentação saudável, receitas práticas
-😊 SAÚDE MENTAL: Gestão de stress, mindfulness  
-💪 EXERCÍCIO: Atividade física adaptável
-🌙 BEM-ESTAR: Sono, rotina, autocuidado
-
-REGRAS:
-🚫 NUNCA dê diagnósticos médicos
-🚫 NUNCA prescreva medicamentos
-✅ SEMPRE encaminhe para profissionais
-✅ Priorize a segurança dos usuários
+NINA_PROMPT = """
+Você é a Nina, assistente de wellness especializada em bem-estar.
+Seja empática, útil e baseada em ciência.
+Nunca dê conselhos médicos - sempre encaminhe para profissionais.
 """
 
 @app.post("/consulta")
@@ -49,28 +34,26 @@ async def consultar_nina(consulta: ConsultaRequest):
         
         response = client.messages.create(
             model="claude-3-haiku-20240307",
-            max_tokens=1024,
+            max_tokens=500,
             temperature=0.7,
-            system=NINA_SYSTEM_PROMPT,
+            system=NINA_PROMPT,
             messages=[{"role": "user", "content": consulta.mensagem}]
         )
         
         return {
             "resposta": response.content[0].text,
-            "area": consulta.area,
-            "status": "sucesso"
+            "area": consulta.area
         }
         
     except Exception as e:
         return {
-            "resposta": "❌ Desculpe, estou com dificuldades técnicas. Tente novamente.",
-            "area": consulta.area, 
-            "status": "erro"
+            "resposta": "Desculpe, estou com dificuldades técnicas. Tente novamente.",
+            "area": consulta.area
         }
 
 @app.get("/")
 async def home():
-    return {"message": "🌱 Nina Wellness API - Cork in Vogue", "status": "online"}
+    return {"message": "Nina Wellness API - Online"}
 
 if __name__ == "__main__":
     import uvicorn
