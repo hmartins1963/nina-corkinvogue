@@ -1,10 +1,10 @@
 services:
   - type: web
-    name: nina-wellness-corkinvogue
+    name: nina-corkinvogue
     env: python
     plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: python main.py
     envVars:
       - key: ANTHROPIC_API_KEY
-        value: SUA_CHAVE_API_AQUI
+        value: sua-chave-anthropic-aqui
